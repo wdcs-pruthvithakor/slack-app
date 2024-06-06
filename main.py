@@ -112,11 +112,12 @@ def send_message_to_slack(message, channel, team_id):
         print(f"Error: Access token not found for workspace {workspace_id}")
         return
     conversation_data = db.conversation.find_one({'workspace_id': workspace_id, 'channel_id': channel})
-    if not conversation_data:
-        conversation_data = db.conversation.insert_one({'workspace_id': workspace_id, 'channel_id': channel})
+
     website_id = token_data["website_id"]
     url = f"https://preprodaiapi.chatwit.ai/chat-bot/chat?website_id={website_id}&user_message={message}"
-    conv_id = conversation_data["conversation_id"]
+    conv_id = None
+    if conversation_data:
+        conv_id = conversation_data["conversation_id"]
     if conv_id:
         url = url+f"&conversation_id={conv_id}"
     res = requests.post(f"https://preprodaiapi.chatwit.ai/chat-bot/chat?website_id={website_id}&user_message={message}")
