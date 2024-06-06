@@ -147,7 +147,9 @@ def slack_events():
             user = event['user']
             channel = event['channel']
             response = f'You said: {text}'
-            send_message_to_slack(text, channel, team_id)
+            from threading import Thread
+            Thread(target=send_message_to_slack, args=(text, channel, team_id)).start()
+
         return '', 200
 
 if __name__ == '__main__':
