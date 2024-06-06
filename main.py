@@ -117,7 +117,7 @@ def send_message_to_slack(message, channel, team_id):
     url = f"https://preprodaiapi.chatwit.ai/chat-bot/chat?website_id={website_id}&user_message={message}"
     conv_id = None
     if conversation_data:
-        conv_id = conversation_data["conversation_id"]
+        conv_id = conversation_data.get("conversation_id", None)
     if conv_id:
         url = url+f"&conversation_id={conv_id}"
     res = requests.post(f"https://preprodaiapi.chatwit.ai/chat-bot/chat?website_id={website_id}&user_message={message}")
