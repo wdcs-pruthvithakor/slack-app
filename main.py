@@ -6,8 +6,7 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from pymongo import MongoClient
 from dotenv import load_dotenv
-import os
-
+import os, re
 # Load environment variables from .env file
 load_dotenv()
 
@@ -104,24 +103,48 @@ def auth_slack_callback():
 
     return 'Slack authentication successful!'
 
+
 def send_message_to_slack(message, channel, team_id):
     print("team_id", team_id)
     workspace_id = team_id  # Implement logic to get workspace ID from channel
     token_data = db.workspaces.find_one({'workspace_id': workspace_id})
-    
     if not token_data:
         print(f"Error: Access token not found for workspace {workspace_id}")
         return
-    
+    conversation_data = db.conversation.find_one({'workspace_id': workspace_id, 'channel_id': channel})
+    if not conversation_data:
+        conversation_data = db.conversation.insert_one({'workspace_id': workspace_id, 'channel_id': channel})
     website_id = token_data["website_id"]
+    url = f"https://preprodaiapi.chatwit.ai/chat-bot/chat?website_id={website_id}&user_message={message}"
+    conv_id = conversation_data["conversation_id"]
+    if conv_id:
+        url = url+f"&conversation_id={conv_id}"
     res = requests.post(f"https://preprodaiapi.chatwit.ai/chat-bot/chat?website_id={website_id}&user_message={message}")
     ans = json.loads(res.content)
     message1 = ans["messages"][0]["model_output"]
+    if not conv_id:
+        conv_id = str(ans["id"])
+        db.workspaces.update_one(
+            {'workspace_id': workspace_id, 'channel_id': channel},
+            {'$set': {
+                'conversation_id': conv_id
+            }},
+            upsert=True
+        )
     access_token = token_data["access_token"]
-    message2=markdownify.markdownify(message1, heading_style="ATX") 
+    markdown_text=markdownify.markdownify(message1, heading_style="ATX") 
+    pattern = r"\[([^\]]+)\]\(([^)]+)\)"
+    def replace_link(match):
+        # Extract link text and URL
+        link_text, url = match.groups()
+        # Return the converted format
+        return f"<{url}|{link_text}>"
+
+    # Substitute the matched links with the replacement function
+    message3 = re.sub(pattern, replace_link, markdown_text)
     payload = {
         'channel': channel,
-        'text': message2
+        'text': message3
     }
     headers = {
         'Authorization': f'Bearer {access_token}',
