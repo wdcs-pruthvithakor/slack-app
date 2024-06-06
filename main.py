@@ -125,7 +125,7 @@ def send_message_to_slack(message, channel, team_id):
     message1 = ans["messages"][0]["model_output"]
     if not conv_id:
         conv_id = str(ans["id"])
-        db.workspaces.update_one(
+        db.conversation.update_one(
             {'workspace_id': workspace_id, 'channel_id': channel},
             {'$set': {
                 'conversation_id': conv_id
