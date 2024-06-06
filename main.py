@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, redirect, url_for
 import requests
 import json
+import markdownify
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from pymongo import MongoClient
@@ -50,7 +51,7 @@ def auth_slack():
     params = {
         'client_id': CLIENT_ID,
         'redirect_uri': REDIRECT_URI,
-        'scope': 'app_mentions:read, channels:read, chat:write.customize, chat:write.public, chat:write, groups:read, links:read, links:write, incoming-webhook, commands',
+        'scope': 'channels:read, chat:write.customize, chat:write.public, chat:write, groups:read, links:read, links:write, incoming-webhook, commands',
         'state': state  # Pass the JSON-encoded state
     }
     return redirect(f"https://slack.com/oauth/v2/authorize?{'&'.join([f'{k}={v}' for k, v in params.items()])}")
@@ -117,9 +118,10 @@ def send_message_to_slack(message, channel, team_id):
     ans = json.loads(res.content)
     message1 = ans["messages"][0]["model_output"]
     access_token = token_data["access_token"]
+    message2=markdownify.markdownify(message1, heading_style="ATX") 
     payload = {
         'channel': channel,
-        'text': message1
+        'text': message2
     }
     headers = {
         'Authorization': f'Bearer {access_token}',
