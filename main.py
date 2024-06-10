@@ -120,7 +120,10 @@ def send_message_to_slack(message, channel, team_id):
         conv_id = conversation_data.get("conversation_id", None)
     if conv_id:
         url = url+f"&conversation_id={conv_id}"
-    res = requests.post(f"https://preprodaiapi.chatwit.ai/chat-bot/chat?website_id={website_id}&user_message={message}")
+    res = requests.post(url)
+    if res.status_code == 405:
+        res1 = requests.post(f"https://preprodaiapi.chatwit.ai/chat-bot/refresh-chat?conversation_id={conv_id}")
+        res = requests.post(url)
     ans = json.loads(res.content)
     message1 = ans["messages"][0]["model_output"]
     if not conv_id:
