@@ -50,7 +50,7 @@ def auth_slack():
     params = {
         'client_id': CLIENT_ID,
         'redirect_uri': REDIRECT_URI,
-        'scope': 'channels:read, chat:write.customize, chat:write.public, chat:write, groups:read, links:read, links:write, incoming-webhook, commands',
+        'scope': 'app_mentions:read, channels:read, chat:write.customize, chat:write.public, chat:write, groups:read, links:read, links:write, incoming-webhook, commands',
         'state': state  # Pass the JSON-encoded state
     }
     return redirect(f"https://slack.com/oauth/v2/authorize?{'&'.join([f'{k}={v}' for k, v in params.items()])}")
